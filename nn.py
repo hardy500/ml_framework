@@ -35,10 +35,10 @@ class Sequential(Layer):
     return input
 
   def parameters(self):
-    params = []
+    parameters = []
     for layer in self.layers:
-      params += layer.parameters()
-    return params
+      parameters += layer.parameters()
+    return parameters
 
 if __name__ == "__main__":
   from optim import SGD
@@ -48,10 +48,12 @@ if __name__ == "__main__":
   x = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True)
   y = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)
 
-  model = Sequential([Linear(2,3), Linear(3,1)])
+  model = Sequential([
+    Linear(2,3),
+    Linear(3,1)
+  ])
 
   optim = SGD(parameters=model.parameters(), alpha=0.05)
-
 
   for i in range(10):
     pred = model.forward(x)
