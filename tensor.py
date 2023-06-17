@@ -1,5 +1,6 @@
 from __future__ import annotations
 import numpy as np
+from sys import exit
 
 class Tensor:
   def __init__(self,
@@ -137,6 +138,10 @@ class Tensor:
                     creation_op="expand_" + str(dim))
     return Tensor(new_data)
 
+  @property
+  def shape(self):
+    return self.data.shape
+
   def __add__(self, other: Tensor) -> Tensor:
     if (self.autograd and other.autograd):
       return Tensor(self.data + other.data,
@@ -179,28 +184,32 @@ class Tensor:
   def __str__(self) -> str:
     return str(self.data.__str__())
 
-np.random.seed(0)
+if __name__ == "__main__":
+  np.random.seed(0)
 
-data = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True) # (4, 2)
-target = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)       # (4, 1)
+  data = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True) # (4, 2)
+  target = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)       # (4, 1)
+  print(data.shape)
+  print(target.shape)
+  exit()
 
-w = list()
-w.append(Tensor(np.random.rand(2,3), autograd=True))
-w.append(Tensor(np.random.rand(3,1), autograd=True))
+  w = list()
+  w.append(Tensor(np.random.rand(2,3), autograd=True))
+  w.append(Tensor(np.random.rand(3,1), autograd=True))
 
-for i in range(10):
+  for i in range(10):
 
-    # Predict
-    pred = data.matmul(w[0]).matmul(w[1])
+      # Predict
+      pred = data.matmul(w[0]).matmul(w[1])
 
-    # Compare
-    loss = ((pred - target)*(pred - target)).sum(0)
+      # Compare
+      loss = ((pred - target)*(pred - target)).sum(0)
 
-    # Learn
-    loss.backward(Tensor(np.ones_like(loss.data)))
+      # Learn
+      loss.backward(Tensor(np.ones_like(loss.data)))
 
-    for w_ in w:
-        w_.data -= w_.grad.data * 0.1
-        w_.grad.data *= 0
+      for w_ in w:
+          w_.data -= w_.grad.data * 0.1
+          w_.grad.data *= 0
 
-    print(loss)
+      print(loss)
