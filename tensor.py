@@ -195,7 +195,7 @@ if __name__ == "__main__":
   w.append(Tensor(np.random.rand(2,3), autograd=True))
   w.append(Tensor(np.random.rand(3,1), autograd=True))
 
-  optim = SGD(params=w, alpha=0.1)
+  optim = SGD(parameters=w, alpha=0.1)
 
   for i in range(10):
     pred = data.matmul(w[0]).matmul(w[1])

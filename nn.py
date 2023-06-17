@@ -5,7 +5,7 @@ class Layer:
   def __init__(self):
     self.params = []
 
-  def get_param(self):
+  def parameters(self):
     return self.params
 
 class Linear(Layer):
@@ -15,19 +15,51 @@ class Linear(Layer):
     self.weight = Tensor(w, autograd=True)
     self.bias = Tensor(np.zeros(out_features), autograd=True)
 
-  def forward(self, x: Tensor) -> Tensor:
-    return x.matmul(self.weight) + self.bias.expand(0, len(x.data))
+    self.params.append(self.weight)
+    self.params.append(self.bias)
 
+  def forward(self, input: Tensor) -> Tensor:
+    return input.matmul(self.weight) + self.bias.expand(0, len(x.data))
+
+class Sequential(Layer):
+  def __init__(self, layers: list=[]):
+    super().__init__()
+    self.layers = layers
+
+  def add(self, layer: Layer):
+    self.layers.append(layer)
+
+  def forward(self, input: Tensor):
+    for layer in self.layers:
+      input = layer.forward(input)
+    return input
+
+  def parameters(self):
+    params = []
+    for layer in self.layers:
+      params += layer.parameters()
+    return params
 
 if __name__ == "__main__":
-  from torch import nn
+  from optim import SGD
+
+  np.random.seed(0)
+
   x = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True)
   y = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)
 
-  model = Linear(2, 3)
-  pred = model.forward(x)
-  nn.Linear(2, 3)
-  print(pred)
+  model = Sequential([Linear(2,3), Linear(3,1)])
+
+  optim = SGD(parameters=model.parameters(), alpha=0.05)
+
+
+  for i in range(10):
+    pred = model.forward(x)
+    loss = ((pred - y) * (pred - y)).sum(0)
+    loss.backward(Tensor(np.ones_like(loss.data)))
+    optim.step()
+    print(loss)
+
 
 
 
