@@ -47,6 +47,13 @@ class MSELoss(Layer):
   def __call__(self, pred: Tensor, y: Tensor) -> Tensor:
     return ((pred - y) * (pred - y)).sum(0)
 
+class CrossEntropyLoss:
+  def __init__(self):
+    super().__init__()
+
+  def __call__(self, pred: Tensor, target: Tensor) -> Tensor:
+    return pred.cross_entropy(target)
+
 class Sigmoid(Layer):
   def __init__(self):
     super().__init__()
@@ -75,29 +82,30 @@ class Embedding(Layer):
   def forward(self, input: Tensor) -> Tensor:
     return self.weight.index_select(input)
 
-
-
 if __name__ == "__main__":
   from optim import SGD
   np.random.seed(0)
 
+  # data indices
   data = Tensor(np.array([1,2,1,2]), autograd=True)
-  target = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)
 
-  embed = Embedding(5,3)
-  model = Sequential([embed, Tanh(), Linear(3,1), Sigmoid()])
-  criterion = MSELoss()
+  # target indices
+  target = Tensor(np.array([0,1,0,1]), autograd=True)
 
-  optim = SGD(parameters=model.parameters(), alpha=0.5)
+  model = Sequential([Embedding(3,3), Tanh(), Linear(3,4)])
+  criterion = CrossEntropyLoss()
+
+  optim = SGD(parameters=model.parameters(), alpha=0.1)
 
   for i in range(10):
-    # Predict
-    pred = model.forward(data)
 
-    # Compare
-    loss = criterion(pred, target)
+      # Predict
+      pred = model.forward(data)
 
-    # Learn
-    loss.backward(Tensor(np.ones_like(loss.data)))
-    optim.step()
-    print(loss)
+      # Compare
+      loss = criterion(pred, target)
+
+      # Learn
+      loss.backward(Tensor(np.ones_like(loss.data)))
+      optim.step()
+      print(loss)

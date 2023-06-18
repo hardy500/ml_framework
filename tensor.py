@@ -119,6 +119,30 @@ class Tensor:
             new_grad[indices_[i]] += grad_[i]
           self.creators[0].backward(Tensor(new_grad))
 
+        if (self.creation_op == "cross_entropy"):
+          dx = self.softmax_out - self.target_dist
+          self.creators[0].backward(Tensor(dx))
+
+  def cross_entropy(self, target_indices):
+
+    tmp = np.exp(self.data)
+    softmax_out = tmp / np.sum(tmp, axis=len(self.data.shape)-1, keepdims=True)
+    t = target_indices.data.flatten()
+    p = softmax_out.reshape(len(t), -1)
+    target_dist = np.eye(p.shape[1])[t]
+    loss = -(np.log(p) * (target_dist)).sum(1).mean()
+
+    if (self.autograd):
+      out = Tensor(loss,
+                   autograd=True,
+                   creators=[self],
+                   creation_op="cross_entropy")
+      out.softmax_out = softmax_out
+      out.target_dist = target_dist
+      return out
+
+    return Tensor(loss)
+
 
   def sigmoid(self):
     if (self.autograd):
