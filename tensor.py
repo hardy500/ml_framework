@@ -111,6 +111,14 @@ class Tensor:
           ones = Tensor(np.ones_like(self.grad.data))
           self.creators[0].backward(self.grad * (ones - (self * self)))
 
+        if (self.creation_op == "index_select"):
+          new_grad = np.zeros_like(self.creators[0].data)
+          indices_ = self.index_select_indices.data.flatten()
+          grad_ = grad.data.reshape(len(indices_), -1)
+          for i in range(len(indices_)):
+            new_grad[indices_[i]] += grad_[i]
+          self.creators[0].backward(Tensor(new_grad))
+
 
   def sigmoid(self):
     if (self.autograd):
@@ -166,6 +174,16 @@ class Tensor:
                     creation_op="expand_" + str(dim))
     return Tensor(new_data)
 
+  def index_select(self, indices):
+    if(self.autograd):
+      new = Tensor(self.data[indices.data],
+                    autograd=True,
+                    creators=[self],
+                    creation_op="index_select")
+      new.index_select_indices = indices
+      return new
+    return Tensor(self.data[indices.data])
+
   @property
   def shape(self):
     return self.data.shape
@@ -215,20 +233,23 @@ class Tensor:
 if __name__ == "__main__":
   from optim import SGD
 
-  np.random.seed(0)
+  #np.random.seed(0)
 
-  data = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True) # (4, 2)
-  target = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)       # (4, 1)
+  #data = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True) # (4, 2)
+  #target = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)       # (4, 1)
 
-  w = list()
-  w.append(Tensor(np.random.rand(2,3), autograd=True))
-  w.append(Tensor(np.random.rand(3,1), autograd=True))
+  #w = list()
+  #w.append(Tensor(np.random.rand(2,3), autograd=True))
+  #w.append(Tensor(np.random.rand(3,1), autograd=True))
 
-  optim = SGD(parameters=w, alpha=0.1)
+  #optim = SGD(parameters=w, alpha=0.1)
 
-  for i in range(10):
-    pred = data.matmul(w[0]).matmul(w[1])
-    loss = ((pred - target) * (pred - target)).sum(0)
-    loss.backward(Tensor(np.ones_like(loss.data)))
-    optim.step()
-    print(loss)
+  #for i in range(10):
+  #  pred = data.matmul(w[0]).matmul(w[1])
+  #  loss = ((pred - target) * (pred - target)).sum(0)
+  #  loss.backward(Tensor(np.ones_like(loss.data)))
+  #  optim.step()
+  #  print(loss)
+  x = Tensor(np.eye(5), autograd=True)
+  x.index_select(Tensor([[1,2,3],[2,3,4]])).backward()
+  print(x.grad)

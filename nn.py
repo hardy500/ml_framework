@@ -61,22 +61,34 @@ class Tanh(Layer):
   def forward(self, input: Tensor) -> Tensor:
     return input.tanh()
 
+class Embedding(Layer):
+  def __init__(self, vocab_size: int, dim: int):
+    super().__init__()
+
+    self.vocab_size = vocab_size
+    self.dim = dim
+
+    weight = (np.random.rand(vocab_size, dim) - 0.5)/dim
+    self.weight = Tensor(weight, autograd=True)
+    self.params.append(self.weight)
+
+  def forward(self, input: Tensor) -> Tensor:
+    return self.weight.index_select(input)
+
+
+
 if __name__ == "__main__":
   from optim import SGD
   np.random.seed(0)
 
-  data = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True)
+  data = Tensor(np.array([1,2,1,2]), autograd=True)
   target = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)
 
-  model = Sequential([
-    Linear(2, 3),
-    Tanh(),
-    Linear(3, 1),
-    Sigmoid()
-  ])
-
+  embed = Embedding(5,3)
+  model = Sequential([embed, Tanh(), Linear(3,1), Sigmoid()])
   criterion = MSELoss()
-  optim = SGD(parameters=model.parameters(), alpha=1)
+
+  optim = SGD(parameters=model.parameters(), alpha=0.5)
 
   for i in range(10):
     # Predict
