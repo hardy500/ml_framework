@@ -106,6 +106,6 @@ if __name__ == "__main__":
       loss = criterion(pred, target)
 
       # Learn
-      loss.backward(Tensor(np.ones_like(loss.data)))
+      loss.backward()
       optim.step()
       print(loss)
