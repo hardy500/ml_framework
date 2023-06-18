@@ -19,7 +19,7 @@ class Linear(Layer):
     self.params.append(self.bias)
 
   def forward(self, input: Tensor) -> Tensor:
-    return input.matmul(self.weight) + self.bias.expand(0, len(x.data))
+    return input.matmul(self.weight) + self.bias.expand(0, len(input.data))
 
 class Sequential(Layer):
   def __init__(self, layers: list=[]):
@@ -47,25 +47,45 @@ class MSELoss(Layer):
   def __call__(self, pred: Tensor, y: Tensor) -> Tensor:
     return ((pred - y) * (pred - y)).sum(0)
 
+class Sigmoid(Layer):
+  def __init__(self):
+    super().__init__()
+
+  def forward(self, input: Tensor) -> Tensor:
+    return input.sigmoid()
+
+class Tanh(Layer):
+  def __init__(self):
+    super().__init__()
+
+  def forward(self, input: Tensor) -> Tensor:
+    return input.tanh()
+
 if __name__ == "__main__":
   from optim import SGD
-
   np.random.seed(0)
 
-  x = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True)
-  y = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)
+  data = Tensor(np.array([[0,0],[0,1],[1,0],[1,1]]), autograd=True)
+  target = Tensor(np.array([[0],[1],[0],[1]]), autograd=True)
 
   model = Sequential([
-    Linear(2,3),
-    Linear(3,1)
+    Linear(2, 3),
+    Tanh(),
+    Linear(3, 1),
+    Sigmoid()
   ])
 
-  optim = SGD(parameters=model.parameters(), alpha=0.05)
-  loss_func = MSELoss()
+  criterion = MSELoss()
+  optim = SGD(parameters=model.parameters(), alpha=1)
 
-  for i in range(20):
-    pred = model.forward(x)
-    loss = loss_func(pred, y)
-    loss.backward()
+  for i in range(10):
+    # Predict
+    pred = model.forward(data)
+
+    # Compare
+    loss = criterion(pred, target)
+
+    # Learn
+    loss.backward(Tensor(np.ones_like(loss.data)))
     optim.step()
     print(loss)
