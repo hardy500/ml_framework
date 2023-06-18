@@ -43,6 +43,10 @@ class Tensor:
                grad_origin: Tensor | None=None):
 
     if (self.autograd):
+
+      if (grad is None):
+        grad = Tensor(np.ones_like(self.data))
+
       if (grad_origin):
         if (self.children[grad_origin.id] == 0):
           raise Exception("cannot backprop more than once")

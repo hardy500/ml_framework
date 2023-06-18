@@ -40,6 +40,13 @@ class Sequential(Layer):
       parameters += layer.parameters()
     return parameters
 
+class MSELoss(Layer):
+  def __init__(self):
+    super().__init__()
+
+  def __call__(self, pred: Tensor, y: Tensor) -> Tensor:
+    return ((pred - y) * (pred - y)).sum(0)
+
 if __name__ == "__main__":
   from optim import SGD
 
@@ -54,14 +61,11 @@ if __name__ == "__main__":
   ])
 
   optim = SGD(parameters=model.parameters(), alpha=0.05)
+  loss_func = MSELoss()
 
-  for i in range(10):
+  for i in range(20):
     pred = model.forward(x)
-    loss = ((pred - y) * (pred - y)).sum(0)
-    loss.backward(Tensor(np.ones_like(loss.data)))
+    loss = loss_func(pred, y)
+    loss.backward()
     optim.step()
     print(loss)
-
-
-
-
